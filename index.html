@@ -1,15 +1,75 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PWA Test</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000000">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Team PWA 測試</title>
+
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icon-180.png">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Team">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+      background: #f4f8f7;
+      color: #1f2d2b;
+    }
+
+    .wrap {
+      min-height: 100vh;
+      padding: 48px 24px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+    }
+
+    p {
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #dff3ec;
+      color: #246b5b;
+      font-size: 14px;
+    }
+  </style>
 </head>
+
 <body>
-    <h1>Welcome to PWA Test</h1>
-    <p>This is a Progressive Web App test page.</p>
-    <script src="app.js"></script>
+  <div class="wrap">
+    <div class="card">
+      <h1>Team PWA 測試</h1>
+      <p>這是一個用 GitHub Pages 做的 PWA 測試頁。</p>
+      <p>請用 iPhone Safari 開啟，然後加入主畫面。</p>
+      <div class="badge">PWA Test Ready</div>
+    </div>
+  </div>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js");
+    }
+  </script>
 </body>
 </html>
