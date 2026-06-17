@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team 需求確認表</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Team" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <style>
+    :root{--bg:#f4f8f7;--card:#fff;--text:#1f2d2b;--muted:#6d7f7a;--line:#dce8e4;--green:#2e7d67;--soft:#e4f4ef;--blue:#e4f1f8;--warn:#fff6d6;}
+    *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",Arial,sans-serif;background:var(--bg);color:var(--text)}
+    header{position:sticky;top:0;z-index:5;background:rgba(244,248,247,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 18px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:980px;margin:auto}.brand{font-weight:800;font-size:20px}.sub{font-size:12px;color:var(--muted);margin-top:2px}
+    .progress{height:8px;background:#dde9e5;border-radius:999px;overflow:hidden;width:130px}.bar{height:100%;width:0%;background:var(--green);transition:.2s}
+    main{max-width:980px;margin:0 auto;padding:20px 16px 96px}.hero{background:linear-gradient(135deg,#fff,#eef8f5);border:1px solid var(--line);border-radius:28px;padding:24px;margin-bottom:16px;box-shadow:0 10px 28px rgba(31,45,43,.06)}
+    h1{font-size:26px;margin:0 0 8px}.hero p{margin:0;color:var(--muted);line-height:1.7}.section{background:var(--card);border:1px solid var(--line);border-radius:22px;margin:14px 0;overflow:hidden;box-shadow:0 8px 22px rgba(31,45,43,.04)}
+    .section-title{padding:16px 18px;background:var(--soft);font-weight:800;border-bottom:1px solid var(--line)}.section.internal .section-title{background:var(--blue)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px 18px}.field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:1/-1}
+    label{font-size:14px;font-weight:700}.req{color:#c44;font-size:12px;margin-left:4px}.hint{font-size:12px;color:var(--muted);line-height:1.4} input,select,textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px 13px;font-size:16px;background:#fff;color:var(--text)} textarea{min-height:86px;resize:vertical}.checkrow{display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid var(--line);border-radius:999px;padding:9px 12px;background:#fff;font-size:14px}.chip input{width:auto;margin-right:5px}.photos{background:var(--warn);border-radius:18px;padding:14px;margin:0 18px 18px;color:#5f4f1d;font-size:14px;line-height:1.6}
+    .actions{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 16px}.actions-inner{max-width:980px;margin:auto;display:flex;gap:10px}button{border:0;border-radius:14px;padding:13px 16px;font-weight:800;font-size:15px}.primary{background:var(--green);color:white}.secondary{background:#edf4f2;color:var(--text)}.danger{background:#fff0ef;color:#a33}.grow{flex:1}
+    @media(max-width:720px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}.progress{width:105px}h1{font-size:24px}}
+  </style>
+</head>
+<body>
+<header><div class="top"><div><div class="brand">Team</div><div class="sub">長照專案需求確認表 PWA</div></div><div><div class="sub" id="pct">0% 完成</div><div class="progress"><div class="bar" id="bar"></div></div></div></div></header>
+<main>
+  <section class="hero"><h1>需求確認表</h1><p>給業務 / FAE 於場勘或客戶訪談時填寫。表單會自動暫存於本機，可匯出 CSV 給 Excel 開啟。</p></section>
+  <form id="form"></form>
+</main>
+<div class="actions"><div class="actions-inner"><button class="secondary" onclick="saveData()" type="button">暫存</button><button class="primary grow" onclick="exportCSV()" type="button">匯出 CSV</button><button class="danger" onclick="clearData()" type="button">清空</button></div></div>
+<script>
+const sections=[
+{title:'C. 偵測需求',items:[
+['主要偵測功能','multi','跌倒/久滯留/闖入/越界/人流計數/高度/體積/其他','業務/FAE','必填',['跌倒','久滯留','闖入','越界','人流計數','高度','體積','其他']],
+['偵測對象','multi','長者/員工/訪客/車輛/物件/其他','業務','必填',['長者','員工','訪客','車輛','物件','其他']],
+['偵測區域','multi','走廊/房間/樓梯口/門口/廁所外/工廠區域/其他','業務/FAE','必填',['走廊','房間','樓梯口','門口','廁所外','工廠區域','其他']],
+['偵測時段','select','上班時間/夜間/24小時/特定時段','業務','必填',['','上班時間','夜間','24小時','特定時段']],
+['是否需要即時警報','select','是/否/不確定','業務','必填',['','是','否','不確定']],
+['警報接收方式','multi','手機 App/中控電腦/Email/LINE/API/聲光警報','業務/FAE','必填',['手機 App','中控電腦','Email','LINE','API','聲光警報']],
+['是否需要儲存錄影','select','是/否/不確定','業務','必填',['','是','否','不確定']],
+['是否需要事件查詢','select','是/否/不確定','業務','建議填',['','是','否','不確定']],
+['是否需要報表','select','是/否/不確定','業務','建議填',['','是','否','不確定']],
+['是否需要整合既有監控系統','multi','VMS/NVR/門禁/警報主機/API/其他','業務/FAE','建議填',['VMS','NVR','門禁','警報主機','API','其他']],
+['客戶期待的反應時間','text','例：事件發生後 5 秒內通知','業務','建議填'],
+['客戶可接受誤報程度','select','高/中/低，請問清楚情境','業務/FAE','建議填',['','高','中','低']],
+['客戶可接受漏報程度','select','高/中/低，通常要特別提醒風險','業務/FAE','建議填',['','高','中','低']]
+]},
+{title:'D. 現場環境條件',items:[
+['安裝區域尺寸','text','長 x 寬；若不確定請拍平面圖或量大約尺寸','業務/FAE','必填'],['天花板高度','text','例：3.8m；高度會影響 3D 偵測範圍','業務/FAE','必填'],['預計攝影機高度','text','扣掉支架後的實際高度','FAE','建議填'],['是否有遮蔽物','multi','樑柱/吊扇/燈具/排煙口/管線','業務/FAE','必填',['樑柱','吊扇','燈具','排煙口','管線']],['光線狀況','select','充足/偏暗/夜間關燈/強光/逆光/不確定','業務/FAE','必填',['','充足','偏暗','夜間關燈','強光','逆光','不確定']],['夜間是否關燈','select','長照案、工廠夜間案必問','業務','必填',['','是','否','不確定']],['是否有戶外光源/逆光','text','門口、窗邊、陽光直射等','業務/FAE','建議填'],['是否有大量移動物','multi','輪椅/推床/推車/貨物/寵物/吊扇','業務/FAE','建議填',['輪椅','推床','推車','貨物','寵物','吊扇']],['是否可拉網路線','select','可/不可/不確定','業務/FAE','必填',['','可','不可','不確定']],['是否有電源/POE','text','插座位置、POE Switch、機櫃位置','業務/FAE','必填'],['是否可安裝主機','text','客戶電腦/我方主機/機櫃/現場空間','業務/FAE','必填'],['是否有現有攝影機','select','若希望沿用，需拍品牌、型號與畫面','業務/FAE','建議填',['','是','否','不確定']],['現有攝影機品牌/規格','text','品牌、解析度、RTSP/ONVIF、VMS/NVR','業務/FAE','若有則必填'],['是否允許遠端維護','select','TeamViewer/VPN/內網限制','業務/FAE','必填',['','TeamViewer','VPN','內網限制','不確定']],['是否可連外網','select','影響 App、遠端維護、推播與系統更新','業務/FAE','必填',['','是','否','不確定']],['資安/隱私限制','text','人臉馬賽克、錄影保存、資料存放位置','業務/FAE','建議填']]
+]},
+{title:'E. 現場照片與圖面需求',items:[
+['平面圖','select','最好標示尺寸、方向、門口、走廊、偵測區域','業務','必填',['','已取得','未取得','不適用']],['偵測區域照片','select','從多角度拍攝；不要只拍地板','業務','必填',['','已取得','未取得','不適用']],['預計安裝位置照片','select','要拍天花板、牆面、可固定處','業務/FAE','必填',['','已取得','未取得','不適用']],['天花板照片','select','包含燈具、吊扇、排煙口、樑柱、管線','業務/FAE','必填',['','已取得','未取得','不適用']],['白天光線照片','select','可判斷強光/逆光/陰影','業務','必填',['','已取得','未取得','不適用']],['夜間/關燈照片','select','長照/夜間案必備','業務','必填',['','已取得','未取得','不適用']],['網路設備位置照片','select','Switch、機櫃、NVR、客戶電腦','業務/FAE','建議填',['','已取得','未取得','不適用']],['電源位置照片','select','插座/POE/電源盤','業務/FAE','建議填',['','已取得','未取得','不適用']],['現有監視器照片','select','若要沿用或整合 VMS/NVR，必拍','業務/FAE','若有則必填',['','已取得','未取得','不適用']],['現場障礙物照片','select','吊扇、燈具、排煙口、樑柱、活動設備','業務/FAE','必填',['','已取得','未取得','不適用']]
+]},
+{title:'F. Team 初步建議（內部填寫）',internal:true,items:[
+['建議解決方案','textarea','例：3D 跌倒偵測＋手機 App 通報＋錄影','FAE/PM','內部'],['建議產品型號','text','S804/A50X/其他','FAE/PM','內部'],['建議攝影機數量','text','依偵測區域、範圍、高度評估','FAE','內部'],['建議鏡頭規格','text','2.8mm/3.6mm/其他','FAE','內部'],['是否需要 IR Projector','select','夜間關燈、低照度環境需特別判斷','FAE','內部',['','是','否','不確定']],['是否需要主機','select','客戶主機/我方主機/雲端/不需要','FAE/PM','內部',['','客戶主機','我方主機','雲端','不需要']],['是否需搭配錄影系統','select','錄影、監看、事件查詢需求','FAE/PM','內部',['','是','否','不確定']],['是否需客製化','text','UI/API/警報/演算法/報表','PM/RD','內部'],['是否需現場測試/POC','select','條件不明、風險高、客戶要求時建議 POC','FAE/PM','內部',['','是','否','不確定']],['初步可行性','select','可行/有條件可行/需補資料/暫不建議','FAE/PM/RD','內部',['','可行','有條件可行','需補資料','暫不建議']],['主要風險','textarea','高度、光線、遮蔽物、夜間、網路、誤報、驗收範圍','FAE/PM','內部'],['下一步行動','multi','補資料/場勘/報價/POC/內部評估/暫停','業務/PM','內部',['補資料','場勘','報價','POC','內部評估','暫停']],['內部備註','textarea','請記錄不能對客戶承諾的限制條件','PM/RD','內部']]
+}];
+function id(s){return s.replace(/[\s\/（）()]/g,'_')} function render(){let html='';sections.forEach(sec=>{html+=`<section class="section ${sec.internal?'internal':''}"><div class="section-title">${sec.title}</div><div class="grid">`;sec.items.forEach(it=>{let [name,type,hint,owner,need,opts]=it;let fid=id(name);let req=need==='必填';html+=`<div class="field ${type==='textarea'||name.includes('備註')?'full':''}"><label>${name}${req?'<span class="req">＊</span>':''}</label>`; if(type==='select'){html+=`<select name="${fid}" ${req?'required':''}>${opts.map(o=>`<option value="${o}">${o||'請選擇'}</option>`).join('')}</select>`} else if(type==='multi'){html+=`<div class="checkrow">${opts.map(o=>`<label class="chip"><input type="checkbox" name="${fid}" value="${o}">${o}</label>`).join('')}</div>`} else if(type==='textarea'){html+=`<textarea name="${fid}" placeholder="${hint}"></textarea>`} else {html+=`<input name="${fid}" placeholder="${hint}" ${req?'required':''}/>`} html+=`<div class="hint">${hint}｜填寫者：${owner}｜${need}</div></div>`});html+='</div>'; if(sec.title.startsWith('E.')) html+='<div class="photos">提醒：iPhone PWA 可先記錄「已取得/未取得」。若要直接上傳照片，需要再接後端或雲端儲存服務。</div>'; html+='</section>'});document.getElementById('form').innerHTML=html;loadData();}
+function collect(){let data={};document.querySelectorAll('input,select,textarea').forEach(el=>{if(el.type==='checkbox'){data[el.name]=data[el.name]||[]; if(el.checked)data[el.name].push(el.value)}else data[el.name]=el.value});return data}
+function saveData(){localStorage.setItem('teamPwaForm',JSON.stringify(collect()));updateProgress();alert('已暫存於本機');}
+function loadData(){let raw=localStorage.getItem('teamPwaForm'); if(!raw){updateProgress();return} let data=JSON.parse(raw);document.querySelectorAll('input,select,textarea').forEach(el=>{if(el.type==='checkbox')el.checked=(data[el.name]||[]).includes(el.value);else el.value=data[el.name]||''});updateProgress();}
+function clearData(){if(confirm('確定清空？')){localStorage.removeItem('teamPwaForm');document.getElementById('form').reset();updateProgress();}}
+function updateProgress(){let required=[...document.querySelectorAll('[required]')];let filled=required.filter(el=>el.value).length;let pct=required.length?Math.round(filled/required.length*100):0;document.getElementById('bar').style.width=pct+'%';document.getElementById('pct').innerText=pct+'% 完成'}
+function exportCSV(){saveData();let data=collect();let rows=[['欄位','填寫內容']];sections.forEach(sec=>{rows.push([sec.title,'']);sec.items.forEach(it=>{let name=it[0], key=id(name), val=Array.isArray(data[key])?data[key].join(' / '):data[key]||'';rows.push([name,val])})});let csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');let blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download='Team_長照專案需求確認表.csv';a.click();URL.revokeObjectURL(url)}
+document.addEventListener('input',()=>{localStorage.setItem('teamPwaForm',JSON.stringify(collect()));updateProgress()});render();if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js')}
+</script>
+</body>
+</html>
