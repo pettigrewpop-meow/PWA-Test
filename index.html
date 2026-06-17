@@ -1,70 +1,850 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Team 需求確認表</title>
-  <link rel="manifest" href="./manifest.json" />
-  <link rel="apple-touch-icon" href="./icon-180.png" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Team" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>建築物平面圖標記與即時熱點圖系統</title>
+  <!-- Tailwind CSS 適用於精美現代化 UI -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{--bg:#f4f8f7;--card:#fff;--text:#1f2d2b;--muted:#6d7f7a;--line:#dce8e4;--green:#2e7d67;--soft:#e4f4ef;--blue:#e4f1f8;--warn:#fff6d6;}
-    *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",Arial,sans-serif;background:var(--bg);color:var(--text)}
-    header{position:sticky;top:0;z-index:5;background:rgba(244,248,247,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 18px}
-    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:980px;margin:auto}.brand{font-weight:800;font-size:20px}.sub{font-size:12px;color:var(--muted);margin-top:2px}
-    .progress{height:8px;background:#dde9e5;border-radius:999px;overflow:hidden;width:130px}.bar{height:100%;width:0%;background:var(--green);transition:.2s}
-    main{max-width:980px;margin:0 auto;padding:20px 16px 96px}.hero{background:linear-gradient(135deg,#fff,#eef8f5);border:1px solid var(--line);border-radius:28px;padding:24px;margin-bottom:16px;box-shadow:0 10px 28px rgba(31,45,43,.06)}
-    h1{font-size:26px;margin:0 0 8px}.hero p{margin:0;color:var(--muted);line-height:1.7}.section{background:var(--card);border:1px solid var(--line);border-radius:22px;margin:14px 0;overflow:hidden;box-shadow:0 8px 22px rgba(31,45,43,.04)}
-    .section-title{padding:16px 18px;background:var(--soft);font-weight:800;border-bottom:1px solid var(--line)}.section.internal .section-title{background:var(--blue)}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px 18px}.field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:1/-1}
-    label{font-size:14px;font-weight:700}.req{color:#c44;font-size:12px;margin-left:4px}.hint{font-size:12px;color:var(--muted);line-height:1.4} input,select,textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:12px 13px;font-size:16px;background:#fff;color:var(--text)} textarea{min-height:86px;resize:vertical}.checkrow{display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid var(--line);border-radius:999px;padding:9px 12px;background:#fff;font-size:14px}.chip input{width:auto;margin-right:5px}.photos{background:var(--warn);border-radius:18px;padding:14px;margin:0 18px 18px;color:#5f4f1d;font-size:14px;line-height:1.6}
-    .actions{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 16px}.actions-inner{max-width:980px;margin:auto;display:flex;gap:10px}button{border:0;border-radius:14px;padding:13px 16px;font-weight:800;font-size:15px}.primary{background:var(--green);color:white}.secondary{background:#edf4f2;color:var(--text)}.danger{background:#fff0ef;color:#a33}.grow{flex:1}
-    @media(max-width:720px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}.progress{width:105px}h1{font-size:24px}}
+    /* 客製化滾動條樣式 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
   </style>
 </head>
-<body>
-<header><div class="top"><div><div class="brand">Team</div><div class="sub">長照專案需求確認表 PWA</div></div><div><div class="sub" id="pct">0% 完成</div><div class="progress"><div class="bar" id="bar"></div></div></div></div></header>
-<main>
-  <section class="hero"><h1>需求確認表</h1><p>給業務 / FAE 於場勘或客戶訪談時填寫。表單會自動暫存於本機，可匯出 CSV 給 Excel 開啟。</p></section>
-  <form id="form"></form>
-</main>
-<div class="actions"><div class="actions-inner"><button class="secondary" onclick="saveData()" type="button">暫存</button><button class="primary grow" onclick="exportCSV()" type="button">匯出 CSV</button><button class="danger" onclick="clearData()" type="button">清空</button></div></div>
-<script>
-const sections=[
-{title:'C. 偵測需求',items:[
-['主要偵測功能','multi','跌倒/久滯留/闖入/越界/人流計數/高度/體積/其他','業務/FAE','必填',['跌倒','久滯留','闖入','越界','人流計數','高度','體積','其他']],
-['偵測對象','multi','長者/員工/訪客/車輛/物件/其他','業務','必填',['長者','員工','訪客','車輛','物件','其他']],
-['偵測區域','multi','走廊/房間/樓梯口/門口/廁所外/工廠區域/其他','業務/FAE','必填',['走廊','房間','樓梯口','門口','廁所外','工廠區域','其他']],
-['偵測時段','select','上班時間/夜間/24小時/特定時段','業務','必填',['','上班時間','夜間','24小時','特定時段']],
-['是否需要即時警報','select','是/否/不確定','業務','必填',['','是','否','不確定']],
-['警報接收方式','multi','手機 App/中控電腦/Email/LINE/API/聲光警報','業務/FAE','必填',['手機 App','中控電腦','Email','LINE','API','聲光警報']],
-['是否需要儲存錄影','select','是/否/不確定','業務','必填',['','是','否','不確定']],
-['是否需要事件查詢','select','是/否/不確定','業務','建議填',['','是','否','不確定']],
-['是否需要報表','select','是/否/不確定','業務','建議填',['','是','否','不確定']],
-['是否需要整合既有監控系統','multi','VMS/NVR/門禁/警報主機/API/其他','業務/FAE','建議填',['VMS','NVR','門禁','警報主機','API','其他']],
-['客戶期待的反應時間','text','例：事件發生後 5 秒內通知','業務','建議填'],
-['客戶可接受誤報程度','select','高/中/低，請問清楚情境','業務/FAE','建議填',['','高','中','低']],
-['客戶可接受漏報程度','select','高/中/低，通常要特別提醒風險','業務/FAE','建議填',['','高','中','低']]
-]},
-{title:'D. 現場環境條件',items:[
-['安裝區域尺寸','text','長 x 寬；若不確定請拍平面圖或量大約尺寸','業務/FAE','必填'],['天花板高度','text','例：3.8m；高度會影響 3D 偵測範圍','業務/FAE','必填'],['預計攝影機高度','text','扣掉支架後的實際高度','FAE','建議填'],['是否有遮蔽物','multi','樑柱/吊扇/燈具/排煙口/管線','業務/FAE','必填',['樑柱','吊扇','燈具','排煙口','管線']],['光線狀況','select','充足/偏暗/夜間關燈/強光/逆光/不確定','業務/FAE','必填',['','充足','偏暗','夜間關燈','強光','逆光','不確定']],['夜間是否關燈','select','長照案、工廠夜間案必問','業務','必填',['','是','否','不確定']],['是否有戶外光源/逆光','text','門口、窗邊、陽光直射等','業務/FAE','建議填'],['是否有大量移動物','multi','輪椅/推床/推車/貨物/寵物/吊扇','業務/FAE','建議填',['輪椅','推床','推車','貨物','寵物','吊扇']],['是否可拉網路線','select','可/不可/不確定','業務/FAE','必填',['','可','不可','不確定']],['是否有電源/POE','text','插座位置、POE Switch、機櫃位置','業務/FAE','必填'],['是否可安裝主機','text','客戶電腦/我方主機/機櫃/現場空間','業務/FAE','必填'],['是否有現有攝影機','select','若希望沿用，需拍品牌、型號與畫面','業務/FAE','建議填',['','是','否','不確定']],['現有攝影機品牌/規格','text','品牌、解析度、RTSP/ONVIF、VMS/NVR','業務/FAE','若有則必填'],['是否允許遠端維護','select','TeamViewer/VPN/內網限制','業務/FAE','必填',['','TeamViewer','VPN','內網限制','不確定']],['是否可連外網','select','影響 App、遠端維護、推播與系統更新','業務/FAE','必填',['','是','否','不確定']],['資安/隱私限制','text','人臉馬賽克、錄影保存、資料存放位置','業務/FAE','建議填']]
-]},
-{title:'E. 現場照片與圖面需求',items:[
-['平面圖','select','最好標示尺寸、方向、門口、走廊、偵測區域','業務','必填',['','已取得','未取得','不適用']],['偵測區域照片','select','從多角度拍攝；不要只拍地板','業務','必填',['','已取得','未取得','不適用']],['預計安裝位置照片','select','要拍天花板、牆面、可固定處','業務/FAE','必填',['','已取得','未取得','不適用']],['天花板照片','select','包含燈具、吊扇、排煙口、樑柱、管線','業務/FAE','必填',['','已取得','未取得','不適用']],['白天光線照片','select','可判斷強光/逆光/陰影','業務','必填',['','已取得','未取得','不適用']],['夜間/關燈照片','select','長照/夜間案必備','業務','必填',['','已取得','未取得','不適用']],['網路設備位置照片','select','Switch、機櫃、NVR、客戶電腦','業務/FAE','建議填',['','已取得','未取得','不適用']],['電源位置照片','select','插座/POE/電源盤','業務/FAE','建議填',['','已取得','未取得','不適用']],['現有監視器照片','select','若要沿用或整合 VMS/NVR，必拍','業務/FAE','若有則必填',['','已取得','未取得','不適用']],['現場障礙物照片','select','吊扇、燈具、排煙口、樑柱、活動設備','業務/FAE','必填',['','已取得','未取得','不適用']]
-]},
-{title:'F. Team 初步建議（內部填寫）',internal:true,items:[
-['建議解決方案','textarea','例：3D 跌倒偵測＋手機 App 通報＋錄影','FAE/PM','內部'],['建議產品型號','text','S804/A50X/其他','FAE/PM','內部'],['建議攝影機數量','text','依偵測區域、範圍、高度評估','FAE','內部'],['建議鏡頭規格','text','2.8mm/3.6mm/其他','FAE','內部'],['是否需要 IR Projector','select','夜間關燈、低照度環境需特別判斷','FAE','內部',['','是','否','不確定']],['是否需要主機','select','客戶主機/我方主機/雲端/不需要','FAE/PM','內部',['','客戶主機','我方主機','雲端','不需要']],['是否需搭配錄影系統','select','錄影、監看、事件查詢需求','FAE/PM','內部',['','是','否','不確定']],['是否需客製化','text','UI/API/警報/演算法/報表','PM/RD','內部'],['是否需現場測試/POC','select','條件不明、風險高、客戶要求時建議 POC','FAE/PM','內部',['','是','否','不確定']],['初步可行性','select','可行/有條件可行/需補資料/暫不建議','FAE/PM/RD','內部',['','可行','有條件可行','需補資料','暫不建議']],['主要風險','textarea','高度、光線、遮蔽物、夜間、網路、誤報、驗收範圍','FAE/PM','內部'],['下一步行動','multi','補資料/場勘/報價/POC/內部評估/暫停','業務/PM','內部',['補資料','場勘','報價','POC','內部評估','暫停']],['內部備註','textarea','請記錄不能對客戶承諾的限制條件','PM/RD','內部']]
-}];
-function id(s){return s.replace(/[\s\/（）()]/g,'_')} function render(){let html='';sections.forEach(sec=>{html+=`<section class="section ${sec.internal?'internal':''}"><div class="section-title">${sec.title}</div><div class="grid">`;sec.items.forEach(it=>{let [name,type,hint,owner,need,opts]=it;let fid=id(name);let req=need==='必填';html+=`<div class="field ${type==='textarea'||name.includes('備註')?'full':''}"><label>${name}${req?'<span class="req">＊</span>':''}</label>`; if(type==='select'){html+=`<select name="${fid}" ${req?'required':''}>${opts.map(o=>`<option value="${o}">${o||'請選擇'}</option>`).join('')}</select>`} else if(type==='multi'){html+=`<div class="checkrow">${opts.map(o=>`<label class="chip"><input type="checkbox" name="${fid}" value="${o}">${o}</label>`).join('')}</div>`} else if(type==='textarea'){html+=`<textarea name="${fid}" placeholder="${hint}"></textarea>`} else {html+=`<input name="${fid}" placeholder="${hint}" ${req?'required':''}/>`} html+=`<div class="hint">${hint}｜填寫者：${owner}｜${need}</div></div>`});html+='</div>'; if(sec.title.startsWith('E.')) html+='<div class="photos">提醒：iPhone PWA 可先記錄「已取得/未取得」。若要直接上傳照片，需要再接後端或雲端儲存服務。</div>'; html+='</section>'});document.getElementById('form').innerHTML=html;loadData();}
-function collect(){let data={};document.querySelectorAll('input,select,textarea').forEach(el=>{if(el.type==='checkbox'){data[el.name]=data[el.name]||[]; if(el.checked)data[el.name].push(el.value)}else data[el.name]=el.value});return data}
-function saveData(){localStorage.setItem('teamPwaForm',JSON.stringify(collect()));updateProgress();alert('已暫存於本機');}
-function loadData(){let raw=localStorage.getItem('teamPwaForm'); if(!raw){updateProgress();return} let data=JSON.parse(raw);document.querySelectorAll('input,select,textarea').forEach(el=>{if(el.type==='checkbox')el.checked=(data[el.name]||[]).includes(el.value);else el.value=data[el.name]||''});updateProgress();}
-function clearData(){if(confirm('確定清空？')){localStorage.removeItem('teamPwaForm');document.getElementById('form').reset();updateProgress();}}
-function updateProgress(){let required=[...document.querySelectorAll('[required]')];let filled=required.filter(el=>el.value).length;let pct=required.length?Math.round(filled/required.length*100):0;document.getElementById('bar').style.width=pct+'%';document.getElementById('pct').innerText=pct+'% 完成'}
-function exportCSV(){saveData();let data=collect();let rows=[['欄位','填寫內容']];sections.forEach(sec=>{rows.push([sec.title,'']);sec.items.forEach(it=>{let name=it[0], key=id(name), val=Array.isArray(data[key])?data[key].join(' / '):data[key]||'';rows.push([name,val])})});let csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');let blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download='Team_長照專案需求確認表.csv';a.click();URL.revokeObjectURL(url)}
-document.addEventListener('input',()=>{localStorage.setItem('teamPwaForm',JSON.stringify(collect()));updateProgress()});render();if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js')}
-</script>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- 頂部導航欄 -->
+  <header
+    class="bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-slate-900">建築平面圖數據標記系統</h1>
+        <p class="text-xs text-slate-500">點擊平面圖標記位置，即時生成空間權重熱點圖</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 flex-wrap">
+      <!-- 隱藏的檔案輸入框 -->
+      <input type="file" id="file-upload" accept="image/*" class="hidden">
+      <button onclick="document.getElementById('file-upload').click()"
+        class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        上傳自訂平面圖
+      </button>
+      <button id="reset-default-btn"
+        class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+        重設預設辦公室圖
+      </button>
+
+      <!-- 下載熱點圖按鈕 (含中心數字標記) -->
+      <button id="export-image-btn"
+        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        下載熱點分析圖 (PNG)
+      </button>
+    </div>
+  </header>
+
+  <!-- 主要內容區 -->
+  <main class="flex-1 flex flex-col lg:flex-row p-6 gap-6 min-h-0">
+
+    <!-- 左側：畫布與控制區 -->
+    <div class="flex-1 flex flex-col gap-4 bg-white rounded-xl border border-slate-200 p-4 shadow-sm min-h-[450px]">
+      <!-- 畫布上方控制列 -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+          <button id="mode-pin-btn"
+            class="px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-slate-800 shadow-sm transition-all flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            標記點模式
+          </button>
+          <button id="mode-heat-btn"
+            class="px-3 py-1.5 text-xs font-semibold rounded-md text-slate-600 hover:text-slate-800 transition-all flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+            熱點圖模式
+          </button>
+        </div>
+
+        <div class="flex items-center gap-4 text-xs text-slate-500">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+            <span>單擊新增</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+            <span>按住拖曳移動</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+            <span>右鍵點擊刪除</span>
+          </div>
+        </div>
+
+        <button id="clear-all-btn"
+          class="text-xs font-medium text-rose-600 hover:text-rose-700 hover:underline transition-colors">
+          清空所有點位
+        </button>
+      </div>
+
+      <!-- 畫布容器 -->
+      <div
+        class="flex-1 bg-slate-100 rounded-lg overflow-auto border border-slate-200 flex items-center justify-center relative min-h-[300px]"
+        id="canvas-container">
+        <canvas id="main-canvas"
+          class="max-w-full max-h-full cursor-crosshair shadow-md transition-shadow duration-200 bg-white rounded"></canvas>
+      </div>
+
+      <!-- 熱點參數微調區 -->
+      <div id="heatmap-settings-panel"
+        class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
+        <div class="flex flex-col gap-1.5">
+          <div class="flex justify-between text-xs font-medium text-slate-600">
+            <span>熱點擴散半徑 (Radius)</span>
+            <span id="radius-val">60px</span>
+          </div>
+          <input type="range" id="param-radius" min="20" max="150" value="60" class="w-full accent-indigo-600">
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <div class="flex justify-between text-xs font-medium text-slate-600">
+            <span>最大權重標準值 (Max Value Scale)</span>
+            <span id="max-val">100</span>
+          </div>
+          <input type="range" id="param-max" min="10" max="500" value="100" class="w-full accent-indigo-600">
+        </div>
+      </div>
+    </div>
+
+    <!-- 右側：側邊數據欄 -->
+    <div class="w-full lg:w-[380px] flex flex-col gap-6">
+      <!-- 標示點管理與數值輸入 -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col flex-1 max-h-[500px]">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+          <h2 class="font-bold text-slate-900 flex items-center gap-2">
+            標示點數據設定
+            <span id="points-count" class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full font-semibold">0
+              點</span>
+          </h2>
+        </div>
+
+        <!-- 點位列表 -->
+        <div id="points-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
+          <!-- 提示尚未新增點位 -->
+          <div id="empty-tips" class="text-center py-12 text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-2 text-slate-300" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <p class="text-sm">尚未新增標記點</p>
+            <p class="text-xs mt-1 text-slate-400">請在左側平面圖上直接點擊新增</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- JSON 資料輸出區 -->
+      <div class="bg-slate-900 rounded-xl p-5 text-slate-100 flex flex-col h-[280px]">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h3 class="font-semibold text-sm">即時輸出資料 (JSON)</h3>
+          </div>
+          <button id="copy-json-btn"
+            class="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+            </svg>
+            複製資料
+          </button>
+        </div>
+        <div class="flex-1 overflow-auto bg-slate-950 p-3 rounded font-mono text-xs text-emerald-400">
+          <pre id="json-preview">[]</pre>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 提示框 Toast -->
+  <div id="toast"
+    class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+    <span id="toast-text"></span>
+  </div>
+
+  <script>
+    // DOM 元素定義
+    const canvas = document.getElementById('main-canvas');
+    const ctx = canvas.getContext('2d');
+    const fileUpload = document.getElementById('file-upload');
+    const resetDefaultBtn = document.getElementById('reset-default-btn');
+    const exportImageBtn = document.getElementById('export-image-btn');
+    const modePinBtn = document.getElementById('mode-pin-btn');
+    const modeHeatBtn = document.getElementById('mode-heat-btn');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    const pointsList = document.getElementById('points-list');
+    const pointsCount = document.getElementById('points-count');
+    const emptyTips = document.getElementById('empty-tips');
+    const jsonPreview = document.getElementById('json-preview');
+    const copyJsonBtn = document.getElementById('copy-json-btn');
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toast-text');
+
+    // 熱點參數控制
+    const heatmapSettingsPanel = document.getElementById('heatmap-settings-panel');
+    const paramRadius = document.getElementById('param-radius');
+    const paramMax = document.getElementById('param-max');
+    const radiusVal = document.getElementById('radius-val');
+    const maxVal = document.getElementById('max-val');
+
+    // 全域變數狀態
+    let bgImage = new Image();
+    let points = [];
+    let nextPointId = 1;
+    let isUsingDefaultMap = true;
+    let activeMode = 'pin'; // 'pin' | 'heat'
+
+    // 拖曳狀態變數
+    let draggedPoint = null;
+    let isDragging = false;
+    const clickThreshold = 15; // 判斷拖曳與點擊的臨界範圍
+
+    // 預先設定的展示用點位 (對應預設辦公室圖)
+    const demoPoints = [
+      { x: 180, y: 150, id: 1, value: 85 }, // 會議室 A
+      { x: 420, y: 220, id: 2, value: 40 }, // 開放辦公區
+      { x: 480, y: 280, id: 3, value: 95 }, // 伺服器機房
+      { x: 150, y: 390, id: 4, value: 20 }, // 主管辦公室
+      { x: 700, y: 140, id: 5, value: 50 }  // 休息茶水間
+    ];
+
+    // 初始載入
+    window.addEventListener('load', () => {
+      loadDefaultFloorplan();
+    });
+
+    // 顯示提示訊息 (取代原生 alert)
+    function showToast(message) {
+      toastText.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 2500);
+    }
+
+    // ==========================================
+    // 1. 繪製預設辦公室平面圖 (向量繪圖生成)
+    // ==========================================
+    function loadDefaultFloorplan() {
+      isUsingDefaultMap = true;
+      points = JSON.parse(JSON.stringify(demoPoints));
+      nextPointId = 6;
+
+      // 建立一張空白的大圖，將預設辦公室畫在上面做為底圖
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = 800;
+      tempCanvas.height = 500;
+      const tCtx = tempCanvas.getContext('2d');
+
+      // 繪製背景網格與地板
+      tCtx.fillStyle = '#ffffff';
+      tCtx.fillRect(0, 0, 800, 500);
+
+      tCtx.strokeStyle = '#f1f5f9';
+      tCtx.lineWidth = 1;
+      for (let x = 0; x < 800; x += 20) {
+        tCtx.beginPath(); tCtx.moveTo(x, 0); tCtx.lineTo(x, 500); tCtx.stroke();
+      }
+      for (let y = 0; y < 500; y += 20) {
+        tCtx.beginPath(); tCtx.moveTo(0, y); tCtx.lineTo(800, y); tCtx.stroke();
+      }
+
+      // 繪製牆壁 (Slate-300 色系)
+      tCtx.strokeStyle = '#94a3b8';
+      tCtx.lineWidth = 6;
+      tCtx.strokeRect(40, 40, 720, 420); // 外牆
+
+      // 隔間牆
+      tCtx.beginPath();
+      // 會議室 A
+      tCtx.moveTo(320, 40); tCtx.lineTo(320, 240);
+      tCtx.moveTo(40, 240); tCtx.lineTo(320, 240);
+      // 伺服器機房
+      tCtx.moveTo(320, 240); tCtx.lineTo(320, 460);
+      tCtx.moveTo(320, 320); tCtx.lineTo(540, 320);
+      tCtx.moveTo(540, 320); tCtx.lineTo(540, 460);
+      // 主管室
+      tCtx.moveTo(40, 340); tCtx.lineTo(200, 340);
+      tCtx.moveTo(200, 340); tCtx.lineTo(200, 460);
+      // 茶水間
+      tCtx.moveTo(600, 40); tCtx.lineTo(600, 200);
+      tCtx.moveTo(600, 200); tCtx.lineTo(760, 200);
+      tCtx.stroke();
+
+      // 繪製門的開口與弧線
+      tCtx.lineWidth = 2;
+      tCtx.strokeStyle = '#cbd5e1';
+      // 會議室門
+      tCtx.beginPath(); tCtx.arc(320, 190, 40, 0.5 * Math.PI, 1 * Math.PI); tCtx.stroke();
+      tCtx.clearRect(316, 150, 8, 40);
+      // 伺服器室門
+      tCtx.beginPath(); tCtx.arc(490, 320, 40, 1 * Math.PI, 1.5 * Math.PI); tCtx.stroke();
+      tCtx.clearRect(450, 316, 40, 8);
+
+      // 繪製一些簡約家具示意圖
+      tCtx.fillStyle = '#f8fafc';
+      tCtx.strokeStyle = '#cbd5e1';
+      tCtx.lineWidth = 2;
+
+      // 會議大桌
+      tCtx.fillRect(100, 100, 140, 60);
+      tCtx.strokeRect(100, 100, 140, 60);
+      tCtx.fillStyle = '#e2e8f0';
+      tCtx.fillRect(150, 120, 40, 20); // 桌中央走線槽
+
+      // 辦公桌群
+      for (let i = 0; i < 3; i++) {
+        tCtx.strokeRect(400, 80 + i * 70, 50, 40);
+        tCtx.strokeRect(460, 80 + i * 70, 50, 40);
+      }
+
+      // 機房機櫃
+      tCtx.fillStyle = '#f1f5f9';
+      for (let i = 0; i < 3; i++) {
+        tCtx.fillRect(350 + i * 50, 360, 35, 70);
+        tCtx.strokeRect(350 + i * 50, 360, 35, 70);
+      }
+
+      // 茶水間吧檯
+      tCtx.fillRect(640, 70, 80, 40);
+      tCtx.strokeRect(640, 70, 80, 40);
+
+      // 房間文字標記
+      tCtx.fillStyle = '#475569';
+      tCtx.font = 'bold 16px "Microsoft JhengHei", "PingFang TC", sans-serif';
+      tCtx.textAlign = 'center';
+      tCtx.textBaseline = 'middle';
+
+      tCtx.fillText("會議室 A", 180, 75);
+      tCtx.fillText("機房 / 核心設備區", 430, 410);
+      tCtx.fillText("主管辦公室", 120, 400);
+      tCtx.fillText("休息茶水間", 680, 150);
+      tCtx.fillText("開放式辦公與走廊區域", 510, 220);
+
+      bgImage.src = tempCanvas.toDataURL();
+    }
+
+    // 當底圖載入完成，設定畫布寬高並繪製
+    bgImage.onload = () => {
+      canvas.width = bgImage.width;
+      canvas.height = bgImage.height;
+      rebuildSidebarList();
+      render();
+    };
+
+    // ==========================================
+    // 2. 自訂平面圖上傳
+    // ==========================================
+    fileUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        isUsingDefaultMap = false;
+        points = []; // 上傳新地圖時，清空原本預設的展示點
+        nextPointId = 1;
+        bgImage.src = event.target.result;
+        showToast("平面圖上傳成功！");
+      };
+      reader.readAsDataURL(file);
+    });
+
+    resetDefaultBtn.addEventListener('click', () => {
+      loadDefaultFloorplan();
+      showToast("已還原預設辦公室圖與展示點位");
+    });
+
+    // ==========================================
+    // 3. 畫布渲染核心 (底圖 + 點位/熱點圖)
+    // ==========================================
+    function render() {
+      // 清空畫布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // 繪製平面底圖
+      ctx.drawImage(bgImage, 0, 0);
+
+      if (activeMode === 'pin') {
+        // 1. 繪製標記點模式 (大圓圈，方便拖曳、新增與查看)
+        points.forEach(p => {
+          const isHovered = (draggedPoint && draggedPoint.id === p.id);
+
+          // 漸變外圈發光效果
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, isHovered ? 24 : 18, 0, Math.PI * 2);
+          ctx.fillStyle = isHovered ? 'rgba(79, 70, 229, 0.25)' : 'rgba(99, 102, 241, 0.15)';
+          ctx.fill();
+
+          // 實體主圈
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+          ctx.fillStyle = '#4f46e5'; // Indigo-600
+          ctx.fill();
+          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+
+          // 數字
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(p.id, p.x, p.y);
+        });
+      } else if (activeMode === 'heat') {
+        // 2. 繪製即時熱點圖模式
+        drawHeatmapOverlay();
+      }
+    }
+
+    // ==========================================
+    // 4. 即時熱點圖渲染演算法 (手寫高效畫布合成)
+    // ==========================================
+    function drawHeatmapOverlay() {
+      const radius = parseInt(paramRadius.value);
+      const scaleMax = parseInt(paramMax.value);
+
+      // 建立離屏(Offscreen)畫布來繪製灰階漸層強度圖
+      const offscreen = document.createElement('canvas');
+      offscreen.width = canvas.width;
+      offscreen.height = canvas.height;
+      const osCtx = offscreen.getContext('2d');
+
+      points.forEach(p => {
+        // 將數值映射到 0.0 ~ 1.0 的強度比例
+        const intensity = Math.min(1, Math.max(0, p.value / scaleMax));
+        if (intensity <= 0) return;
+
+        // 建立放射狀漸變，從中心強度漸變到邊緣 0
+        const grad = osCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius);
+        grad.addColorStop(0, `rgba(0,0,0,${intensity})`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+        osCtx.fillStyle = grad;
+        osCtx.beginPath();
+        osCtx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        osCtx.fill();
+      });
+
+      // 獲取灰階強度圖像素數據
+      const imgData = osCtx.getImageData(0, 0, offscreen.width, offscreen.height);
+      const data = imgData.data;
+
+      // 將灰階透明度(Alpha值)映射到經典熱點色彩光譜 (藍-綠-黃-紅)
+      for (let i = 0; i < data.length; i += 4) {
+        const alpha = data[i + 3]; // 取得透明度 0 ~ 255
+        if (alpha > 0) {
+          const color = getColorMapValue(alpha);
+          data[i] = color.r;     // 紅
+          data[i + 1] = color.g; // 綠
+          data[i + 2] = color.b; // 藍
+          data[i + 3] = alpha * 0.8; // 乘以 0.8 使熱點有輕透感，可看清下方平面底圖
+        }
+      }
+
+      // 將染色後的圖像放回離屏畫布
+      osCtx.putImageData(imgData, 0, 0);
+
+      // 將整層熱點圖疊加至主畫布上
+      ctx.drawImage(offscreen, 0, 0);
+
+      // 【核心升級】：在熱點中心繪製高對比、極清晰的數字標籤，便於報表對照
+      points.forEach(p => {
+        // 1. 繪製圓形底色 (採用 Slate-900 深色半透明，能在紅黃綠藍背景下完美突顯)
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 11, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.fill();
+
+        // 2. 繪製白色細邊框，防止在極深色熱點區邊緣模糊
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // 3. 繪製白色數字標籤
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(p.id, p.x, p.y);
+      });
+    }
+
+    // 熱點圖色彩對照表
+    function getColorMapValue(alpha) {
+      // alpha 值為 0 ~ 255。
+      const r = [];
+      const g = [];
+      const b = [];
+
+      for (let i = 0; i < 256; i++) {
+        if (i < 64) {
+          r[i] = 0;
+          g[i] = Math.round(i * 4);
+          b[i] = 255;
+        } else if (i < 128) {
+          r[i] = 0;
+          g[i] = 255;
+          b[i] = Math.round(255 - (i - 64) * 4);
+        } else if (i < 192) {
+          r[i] = Math.round((i - 128) * 4);
+          g[i] = 255;
+          b[i] = 0;
+        } else {
+          r[i] = 255;
+          g[i] = Math.round(255 - (i - 192) * 4);
+          b[i] = 0;
+        }
+      }
+      return { r: r[alpha], g: g[alpha], b: b[alpha] };
+    }
+
+    // ==========================================
+    // 5. 畫布互動與拖曳邏輯
+    // ==========================================
+
+    // 取得滑鼠在 Canvas 解析度下的精確座標 (考量到 CSS 的縮放)
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: Math.round((e.clientX - rect.left) * scaleX),
+        y: Math.round((e.clientY - rect.top) * scaleY)
+      };
+    }
+
+    // 滑鼠按下
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return; // 只回應滑鼠左鍵
+
+      const coords = getCanvasCoords(e);
+
+      // 檢查點擊位置是否在現有点位範圍內 (15像素半徑內)
+      const clickedPoint = points.find(p => {
+        const dist = Math.hypot(p.x - coords.x, p.y - coords.y);
+        return dist < clickThreshold;
+      });
+
+      if (clickedPoint) {
+        // 開始拖曳模式
+        draggedPoint = clickedPoint;
+        isDragging = true;
+        render();
+      } else {
+        // 點在空白處 -> 新增標記點
+        const newPoint = {
+          x: coords.x,
+          y: coords.y,
+          id: nextPointId++,
+          value: 50 // 預設初始權重值
+        };
+        points.push(newPoint);
+        rebuildSidebarList();
+        render();
+        showToast(`新增標記點 #${newPoint.id}`);
+      }
+    });
+
+    // 滑鼠移動
+    canvas.addEventListener('mousemove', (e) => {
+      const coords = getCanvasCoords(e);
+
+      if (isDragging && draggedPoint) {
+        // 更新拖曳中點位的座標 (防邊界溢出)
+        draggedPoint.x = Math.max(10, Math.min(canvas.width - 10, coords.x));
+        draggedPoint.y = Math.max(10, Math.min(canvas.height - 10, coords.y));
+
+        // 即時更新右邊對應欄位的座標顯示 (UI 反饋)
+        const coordLabel = document.getElementById(`coords-${draggedPoint.id}`);
+        if (coordLabel) {
+          coordLabel.textContent = `X: ${draggedPoint.x}, Y: ${draggedPoint.y}`;
+        }
+
+        render();
+        updateJsonPreview();
+      } else {
+        // 未拖曳狀態下，滑鼠滑過點位時高亮效果
+        const hoveredPoint = points.find(p => {
+          const dist = Math.hypot(p.x - coords.x, p.y - coords.y);
+          return dist < clickThreshold;
+        });
+
+        if (hoveredPoint) {
+          canvas.style.cursor = 'move';
+          if (!draggedPoint || draggedPoint.id !== hoveredPoint.id) {
+            draggedPoint = hoveredPoint;
+            render();
+          }
+        } else {
+          canvas.style.cursor = 'crosshair';
+          if (draggedPoint) {
+            draggedPoint = null;
+            render();
+          }
+        }
+      }
+    });
+
+    // 滑鼠放開
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        draggedPoint = null;
+        rebuildSidebarList(); // 重建列表以對應最新座標
+        render();
+        showToast("位置已更新");
+      }
+    });
+
+    // 右鍵點擊點位進行刪除
+    canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault(); // 阻止瀏覽器右鍵選單
+      const coords = getCanvasCoords(e);
+
+      const targetIndex = points.findIndex(p => {
+        const dist = Math.hypot(p.x - coords.x, p.y - coords.y);
+        return dist < clickThreshold;
+      });
+
+      if (targetIndex !== -1) {
+        const deletedId = points[targetIndex].id;
+        points.splice(targetIndex, 1);
+        rebuildSidebarList();
+        render();
+        showToast(`已刪除標記點 #${deletedId}`);
+      }
+    });
+
+
+    // ==========================================
+    // 6. 右側側邊欄列表與資料更新
+    // ==========================================
+    function rebuildSidebarList() {
+      // 更新計數
+      pointsCount.textContent = `${points.length} 點`;
+
+      if (points.length === 0) {
+        emptyTips.classList.remove('hidden');
+        // 清空清單內除了空提示外的所有子元素
+        const children = Array.from(pointsList.children);
+        children.forEach(child => {
+          if (child.id !== 'empty-tips') child.remove();
+        });
+        updateJsonPreview();
+        return;
+      }
+
+      emptyTips.classList.add('hidden');
+
+      const oldScrollTop = pointsList.scrollTop;
+
+      // 清理舊項目
+      const children = Array.from(pointsList.children);
+      children.forEach(child => {
+        if (child.id !== 'empty-tips') child.remove();
+      });
+
+      // 建立新項目
+      points.forEach(point => {
+        const item = document.createElement('div');
+        item.className = 'bg-slate-50 border border-slate-200 hover:border-indigo-200 rounded-lg p-3 flex flex-col gap-2 transition-all shadow-sm';
+        item.id = `point-item-${point.id}`;
+
+        item.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center">
+                                ${point.id}
+                            </span>
+                            <span id="coords-${point.id}" class="text-xs font-mono text-slate-500">
+                                X: ${point.x}, Y: ${point.y}
+                            </span>
+                        </div>
+                        <button onclick="deletePoint(${point.id})" class="text-xs font-semibold text-rose-500 hover:text-rose-700 transition-colors">
+                            刪除
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-600 font-medium">權重值:</span>
+                        <input type="number" value="${point.value}" step="any" min="0" max="1000"
+                            class="flex-1 px-2.5 py-1 text-sm bg-white border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                            oninput="updatePointValue(${point.id}, this.value)">
+                    </div>
+                `;
+        pointsList.appendChild(item);
+      });
+
+      pointsList.scrollTop = oldScrollTop;
+      updateJsonPreview();
+    }
+
+    // 修改點位數值
+    window.updatePointValue = function (id, value) {
+      const point = points.find(p => p.id === id);
+      if (point) {
+        point.value = parseFloat(value) || 0;
+        updateJsonPreview();
+        if (activeMode === 'heat') {
+          render(); // 熱點圖模式下即時更新渲染
+        }
+      }
+    };
+
+    // 刪除特定點位
+    window.deletePoint = function (id) {
+      const targetIndex = points.findIndex(p => p.id === id);
+      if (targetIndex !== -1) {
+        points.splice(targetIndex, 1);
+        rebuildSidebarList();
+        render();
+        showToast(`已刪除標記點 #${id}`);
+      }
+    };
+
+    // 更新 JSON 即時預覽
+    function updateJsonPreview() {
+      jsonPreview.textContent = JSON.stringify(points, null, 2);
+    }
+
+    // ==========================================
+    // 7. 互動模式切換與其它按鈕控制
+    // ==========================================
+    modePinBtn.addEventListener('click', () => {
+      activeMode = 'pin';
+      modePinBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-slate-800 shadow-sm transition-all flex items-center gap-1.5";
+      modeHeatBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-md text-slate-600 hover:text-slate-800 transition-all flex items-center gap-1.5";
+      heatmapSettingsPanel.classList.add('hidden');
+      render();
+    });
+
+    modeHeatBtn.addEventListener('click', () => {
+      activeMode = 'heat';
+      modeHeatBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-slate-800 shadow-sm transition-all flex items-center gap-1.5";
+      modePinBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-md text-slate-600 hover:text-slate-800 transition-all flex items-center gap-1.5";
+      heatmapSettingsPanel.classList.remove('hidden');
+      render();
+    });
+
+    clearAllBtn.addEventListener('click', () => {
+      if (points.length === 0) return;
+      points = [];
+      nextPointId = 1;
+      rebuildSidebarList();
+      render();
+      showToast("已清空所有標記點");
+    });
+
+    // 複製 JSON 資料到剪貼簿 (相容 iFrame 環境)
+    copyJsonBtn.addEventListener('click', () => {
+      const jsonText = JSON.stringify(points, null, 2);
+
+      // 建立暫時性 textarea 來複製
+      const el = document.createElement('textarea');
+      el.value = jsonText;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+
+      showToast("JSON 點位數據已成功複製到剪貼簿！");
+    });
+
+    // 熱點滑桿參數監聽
+    paramRadius.addEventListener('input', (e) => {
+      radiusVal.textContent = `${e.target.value}px`;
+      if (activeMode === 'heat') render();
+    });
+
+    // 最大值設定監聽
+    paramMax.addEventListener('input', (e) => {
+      maxVal.textContent = e.target.value;
+      if (activeMode === 'heat') render();
+    });
+
+    // ==========================================
+    // 8. 輸出熱點圖圖片為 PNG (包含高對比數字中心)
+    // ==========================================
+    exportImageBtn.addEventListener('click', () => {
+      if (points.length === 0) {
+        showToast("平面圖上目前沒有任何點位資料，請先點擊平面圖增加標記點！");
+        return;
+      }
+
+      // 1. 記錄使用者原本選擇的模式
+      const prevMode = activeMode;
+
+      // 2. 切換為熱點圖模式
+      activeMode = 'heat';
+      render(); // 繪製包含最新高對比數字標籤的熱點分析圖
+
+      try {
+        // 3. 取得包含完美熱點與數字標籤的 Base64 PNG 數據
+        const imgDataUrl = canvas.toDataURL('image/png');
+
+        // 4. 建立隱藏的 a 標籤來觸發瀏覽器下載
+        const downloadLink = document.createElement('a');
+        downloadLink.download = `floorplan_heatmap_report_${Date.now()}.png`;
+        downloadLink.href = imgDataUrl;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        showToast("熱點分析圖匯出成功！已下載含數字標記之 PNG 圖片。");
+      } catch (error) {
+        console.error("圖片匯出出錯：", error);
+        showToast("熱點圖匯出失敗，請確認是否上傳了具備跨域限制的圖片來源。");
+      }
+
+      // 5. 將畫面模式與狀態復原
+      activeMode = prevMode;
+      render();
+    });
+
+  </script>
 </body>
+
 </html>
